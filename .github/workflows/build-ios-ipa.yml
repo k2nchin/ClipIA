@@ -1,0 +1,82 @@
+name: Build ClipIA iOS IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-ios-ipa:
+    name: Build Unsigned iOS IPA (Xcode)
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: mobile
+        run: npx tsc --noEmit
+
+      - name: Expo Prebuild (iOS)
+        working-directory: mobile
+        run: npx expo prebuild --platform ios --clean --non-interactive
+
+      - name: Install CocoaPods
+        working-directory: mobile/ios
+        run: pod install
+
+      - name: Build Unsigned Release .app (iphoneos)
+        working-directory: mobile/ios
+        run: |
+          set -e
+          WORKSPACE=$(ls -d *.xcworkspace | head -n 1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Building workspace=$WORKSPACE scheme=$SCHEME"
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package ClipIA-iOS.ipa
+        working-directory: mobile/ios
+        run: |
+          set -e
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" -maxdepth 2 | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: .app bundle not found"
+            exit 1
+          fi
+          echo "Packaging $APP_PATH"
+          rm -rf ipa_out ClipIA-iOS.ipa
+          mkdir -p ipa_out/Payload
+          cp -R "$APP_PATH" ipa_out/Payload/
+          cd ipa_out
+          zip -r ../ClipIA-iOS.ipa Payload
+          ls -lh ../ClipIA-iOS.ipa
+
+      - name: Upload ClipIA-iOS.ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClipIA-iOS-IPA
+          path: mobile/ios/ClipIA-iOS.ipa
+          retention-days: 30

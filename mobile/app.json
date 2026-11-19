@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "ClipIA",
+    "slug": "clipia",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#070708",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.clipia.studio",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "ClipIA necesita acceso a tus fotos y videos para importar clips y eliminar archivos residuales cuando lo autorices."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#070708",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-video"
+    ]
+  }
+}
