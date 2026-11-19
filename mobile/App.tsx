@@ -109,9 +109,12 @@ function ClipIAApp() {
 
   const [editorConfig, setEditorConfig] = useState<EditorConfig>({
     aspectRatio: '9:16',
+    layoutPreset: 'streamer_split',
+    blurBackdrop: true,
+    creatorWatermark: 'KICK.COM/TU_CANAL',
     smartCrop: true,
     safeZone: true,
-    captionStyle: 'pop',
+    captionStyle: 'clean',
     censorWords: true,
     autoZoom: true,
   });
@@ -279,6 +282,7 @@ function ClipIAApp() {
         {screen === 'preview' ? (
           <PreviewGateScreen
             autoPurgeRaw={automation.autoPurgeRaw}
+            watermark={editorConfig.creatorWatermark}
             onBack={() => setScreen('editor')}
             onApprove={() => setScreen('export')}
           />

@@ -11,25 +11,26 @@ import {
 
 type Props = {
   autoPurgeRaw: boolean;
+  watermark: string;
   onBack: () => void;
   onApprove: () => void;
 };
 
 const FRAMES = [
-  { time: '00:02', label: 'Inicio (Hook)', caption: '“¿SABÍAS ESTO?”', note: 'Face Lock centrado · 9:16 OK' },
-  { time: '00:18', label: 'Clímax (Pico)', caption: '“CAMBIA **** TODO”', note: 'Auto-Zoom 1.15x · Censura OK' },
-  { time: '00:34', label: 'Cierre (CTA)', caption: '“SÍGUEME AQUÍ”', note: 'Zona segura IG / YT / FB OK' },
+  { time: '00:02', label: 'Inicio (Hook)', caption: 'Mattia os pidió que os encargaseis,\ny lo hicisteis, ¿no?', note: 'Facecam + Blur ambiental OK' },
+  { time: '00:18', label: 'Clímax (Reacción)', caption: 'No lo pongas difícil.\nEsto cambia **** todo.', note: 'Auto-Zoom 1.15x · Censura OK' },
+  { time: '00:34', label: 'Cierre (CTA)', caption: 'Sígueme para más clips\nen directo hoy.', note: 'Zona segura IG / YT / FB OK' },
 ];
 
-export function PreviewGateScreen({ autoPurgeRaw, onBack, onApprove }: Props) {
-  const [selected, setSelected] = useState(1);
+export function PreviewGateScreen({ autoPurgeRaw, watermark, onBack, onApprove }: Props) {
+  const [selected, setSelected] = useState(0);
   const active = FRAMES[selected];
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <StudioHeader
         title="Aprobación (3 Frames)"
-        subtitle="SIN RENDER FINAL AÚN"
+        subtitle="STREAMER SPLIT 1080×1920"
         subtitleColor={colors.warn}
         onBack={onBack}
       />
@@ -37,28 +38,42 @@ export function PreviewGateScreen({ autoPurgeRaw, onBack, onApprove }: Props) {
       <View style={styles.warnBanner}>
         <Ionicons name="shield-checkmark-outline" size={16} color={colors.warn} />
         <Text style={styles.warnText}>
-          Revisa estos 3 fotogramas generados por FFmpeg antes de aprobar el renderizado final.
+          Revisa los 3 fotogramas en formato Streamer Split (facecam con blur + video inferior + subtítulos) antes del render final.
         </Text>
       </View>
 
-      {/* Main Frame Inspector */}
+      {/* Main Frame Inspector in Streamer Split 9:16 */}
       <View style={styles.frameOuter}>
         <View style={styles.frameCard}>
-          <View style={styles.frameTop}>
-            <StatusPill label={`FRAME ${selected + 1}/3`} tone="neutral" />
-            <StatusPill label={active.time} tone="accent" />
-          </View>
-
-          <View style={styles.frameCenter}>
-            <View style={styles.frameAvatar}>
-              <Ionicons name="film" size={28} color={colors.fg} />
+          <View style={styles.topBlur}>
+            <View style={styles.glowLeft} />
+            <View style={styles.glowRight} />
+            <View style={styles.frameTopBadges}>
+              <StatusPill label={`FRAME ${selected + 1}/3`} tone="neutral" />
+              <StatusPill label={active.time} tone="accent" />
             </View>
-            <StatusPill label={active.label} tone="ok" />
           </View>
 
-          <View style={styles.frameBottom}>
-            <Text style={styles.frameCaption}>{active.caption}</Text>
-            <Text style={styles.frameNote}>{active.note}</Text>
+          <View style={styles.bottomVideo}>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="film-outline" size={24} color="rgba(255,255,255,0.22)" />
+            </View>
+            <View style={styles.frameBottom}>
+              <Text style={styles.frameCaption}>{active.caption}</Text>
+              <Text style={styles.frameNote}>{active.note}</Text>
+            </View>
+          </View>
+
+          {/* Rounded Facecam Card */}
+          <View style={styles.facecamCard}>
+            <Ionicons name="headset" size={22} color={colors.fg} />
+            {watermark.trim().length > 0 ? (
+              <View style={styles.wmPill}>
+                <Text style={styles.wmText} numberOfLines={1}>
+                  {watermark}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
@@ -90,17 +105,17 @@ export function PreviewGateScreen({ autoPurgeRaw, onBack, onApprove }: Props) {
       {/* Pipeline Summary */}
       <View style={styles.summaryCard}>
         <View style={styles.sumRow}>
+          <Text style={styles.sumKey}>Layout</Text>
+          <Text style={styles.sumVal}>Streamer Split (Blur + Facecam)</Text>
+        </View>
+        <View style={styles.sumRow}>
           <Text style={styles.sumKey}>Formato final</Text>
           <Text style={styles.sumVal}>1080×1920 · 30fps · H.264/AAC</Text>
         </View>
         <View style={styles.sumRow}>
-          <Text style={styles.sumKey}>Al aprobar</Text>
-          <Text style={[styles.sumVal, { color: colors.ok }]}>Render + Subida a Drive</Text>
-        </View>
-        <View style={styles.sumRow}>
           <Text style={styles.sumKey}>Video residual (2.4 GB)</Text>
           <Text style={[styles.sumVal, { color: autoPurgeRaw ? colors.ok : colors.warn }]}>
-            {autoPurgeRaw ? 'Auto-borrado tras confirmar' : 'Conservar en iPhone'}
+            {autoPurgeRaw ? 'Auto-borrado tras subir a Drive' : 'Conservar en iPhone'}
           </Text>
         </View>
       </View>
@@ -151,45 +166,91 @@ const styles = StyleSheet.create({
   },
   frameCard: {
     width: 196,
-    height: 304,
-    backgroundColor: '#131119',
+    height: 336,
+    backgroundColor: '#12100E',
     borderWidth: 2,
     borderColor: colors.acc,
     borderRadius: radius.sm,
-    padding: 12,
-    justifyContent: 'space-between',
+    overflow: 'hidden',
+    position: 'relative',
   },
-  frameTop: {
+  topBlur: {
+    height: '38%',
+    backgroundColor: '#6D147E',
+    padding: 8,
+    overflow: 'hidden',
+  },
+  glowLeft: {
+    position: 'absolute',
+    top: -20,
+    left: -20,
+    width: 110,
+    height: 110,
+    borderRadius: 99,
+    backgroundColor: 'rgba(255, 10, 138, 0.55)',
+  },
+  glowRight: {
+    position: 'absolute',
+    bottom: -15,
+    right: -15,
+    width: 110,
+    height: 110,
+    borderRadius: 99,
+    backgroundColor: 'rgba(139, 92, 246, 0.55)',
+  },
+  frameTopBadges: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 2,
   },
-  frameCenter: {
-    alignItems: 'center',
-    gap: 10,
+  bottomVideo: {
+    flex: 1,
+    backgroundColor: '#12100E',
+    paddingHorizontal: 10,
+    paddingBottom: 12,
+    paddingTop: 22,
   },
-  frameAvatar: {
-    width: 66,
-    height: 66,
-    borderRadius: 99,
-    backgroundColor: colors.bg2,
+  facecamCard: {
+    position: 'absolute',
+    top: 32,
+    alignSelf: 'center',
+    width: 102,
+    height: 104,
+    borderRadius: 12,
+    backgroundColor: '#241838',
     borderWidth: 1,
-    borderColor: colors.lineStrong,
+    borderColor: 'rgba(255,255,255,0.28)',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  wmPill: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    maxWidth: '90%',
+  },
+  wmText: {
+    color: colors.white,
+    fontSize: 6.5,
+    fontWeight: '900',
   },
   frameBottom: {
     alignItems: 'center',
     gap: 4,
   },
   frameCaption: {
-    color: colors.warn,
-    fontSize: 14,
-    fontWeight: '900',
+    color: '#F5F3EF',
+    fontSize: 9.5,
+    fontWeight: '700',
     textAlign: 'center',
+    lineHeight: 13,
   },
   frameNote: {
-    color: colors.fg2,
-    fontSize: 9,
+    color: colors.ok,
+    fontSize: 8,
+    fontWeight: '800',
     textAlign: 'center',
   },
   strip: {

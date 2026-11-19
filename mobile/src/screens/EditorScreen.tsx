@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme/tokens';
-import { AspectRatio, CaptionStyle, EditorConfig } from '../types/clipia';
+import { AspectRatio, CaptionStyle, EditorConfig, LayoutPreset } from '../types/clipia';
 import {
   StatusPill,
   StudioHeader,
@@ -23,16 +23,21 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
 
   const canvasDims =
     config.aspectRatio === '9:16'
-      ? { width: 172, height: 296 }
+      ? { width: 186, height: 330 }
       : config.aspectRatio === '1:1'
-        ? { width: 232, height: 232 }
+        ? { width: 236, height: 236 }
         : { width: 310, height: 180 };
+
+  const isStreamerSplit =
+    config.aspectRatio === '9:16' && config.layoutPreset === 'streamer_split';
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <StudioHeader
         title="Editor Pro"
-        subtitle={`${config.aspectRatio} · 30FPS · H.264`}
+        subtitle={`${config.aspectRatio} · ${
+          isStreamerSplit ? 'STREAMER SPLIT' : config.layoutPreset.toUpperCase()
+        }`}
         onBack={onBack}
         rightElement={
           <Pressable
@@ -50,45 +55,109 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
       {/* Dynamic Aspect Ratio Stage */}
       <View style={styles.stageOuter}>
         <View style={[styles.canvas, canvasDims]}>
-          <View style={styles.canvasTop}>
-            <StatusPill label={config.aspectRatio} tone="neutral" />
-            {config.autoZoom ? <StatusPill label="ZOOM IA" tone="accent" /> : null}
-          </View>
-
-          {/* Safe zone right column mockup for Reels/Shorts */}
-          {config.safeZone && config.aspectRatio === '9:16' ? (
-            <View style={styles.safeZoneIcons}>
-              <Ionicons name="heart" size={14} color="rgba(255,255,255,0.32)" />
-              <Ionicons name="chatbubble" size={14} color="rgba(255,255,255,0.32)" />
-              <Ionicons name="paper-plane" size={14} color="rgba(255,255,255,0.32)" />
-            </View>
-          ) : null}
-
-          {/* Subject + Face Lock Reticle */}
-          <View style={styles.subjectWrap}>
-            <View style={styles.subjectAvatar}>
-              <Ionicons name="mic" size={26} color={colors.fg} />
-            </View>
-            {config.smartCrop ? (
-              <View style={styles.faceBox}>
-                <Text style={styles.faceLabel}>FACE LOCK</Text>
+          {isStreamerSplit ? (
+            /* EXACT STREAMER SPLIT LAYOUT: Blurred Ambient Top + Rounded Facecam Card + Full Bottom Content */
+            <View style={styles.splitContainer}>
+              {/* Top 38% Blurred Ambient Backdrop */}
+              <View
+                style={[
+                  styles.topAmbientZone,
+                  !config.blurBackdrop && { backgroundColor: '#121018' },
+                ]}
+              >
+                {config.blurBackdrop ? (
+                  <>
+                    <View style={styles.glowLeft} />
+                    <View style={styles.glowRight} />
+                  </>
+                ) : null}
               </View>
-            ) : null}
-          </View>
 
-          {/* Dynamic Captions Preview */}
-          <View style={styles.captionWrap}>
-            <Text
-              style={[
-                styles.captionText,
-                config.captionStyle === 'pop' && styles.captionPop,
-                config.captionStyle === 'magenta' && styles.captionMagenta,
-                config.captionStyle === 'minimal' && styles.captionMinimal,
-              ]}
-            >
-              {config.censorWords ? 'ESTO CAMBIA **** TODO' : 'ESTO CAMBIA BRUTAL TODO'}
-            </Text>
-          </View>
+              {/* Bottom 62% Reaction / Main Content Video */}
+              <View style={styles.bottomContentZone}>
+                <View style={styles.scenePlaceholder}>
+                  <Ionicons name="film-outline" size={26} color="rgba(255,255,255,0.2)" />
+                  <Text style={styles.sceneLabel}>VIDEO REACCIÓN / GAMEPLAY</Text>
+                </View>
+
+                {/* Clean Centered Subtitles in Lower Safe Zone */}
+                <View style={styles.captionWrap}>
+                  <Text
+                    style={[
+                      styles.captionText,
+                      config.captionStyle === 'clean' && styles.captionClean,
+                      config.captionStyle === 'pop' && styles.captionPop,
+                      config.captionStyle === 'magenta' && styles.captionMagenta,
+                    ]}
+                  >
+                    {config.censorWords
+                      ? 'Esto cambia **** por completo,\n¿no lo pongas difícil?'
+                      : 'Mattia os pidió que os encargaseis,\ny lo hicisteis, ¿no?'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Floating Rounded Facecam Card overlapping seam */}
+              <View style={styles.facecamCard}>
+                <View style={styles.facecamInner}>
+                  <Ionicons name="headset" size={24} color={colors.fg} />
+                  {config.smartCrop ? (
+                    <View style={styles.faceLockPill}>
+                      <Text style={styles.faceLockText}>FACE LOCK</Text>
+                    </View>
+                  ) : null}
+                </View>
+                {config.creatorWatermark.trim().length > 0 ? (
+                  <View style={styles.watermarkPill}>
+                    <Text style={styles.watermarkText} numberOfLines={1}>
+                      {config.creatorWatermark}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Safe zone right column mockup for Reels/Shorts */}
+              {config.safeZone ? (
+                <View style={styles.safeZoneIcons}>
+                  <Ionicons name="heart" size={13} color="rgba(255,255,255,0.35)" />
+                  <Ionicons name="chatbubble" size={13} color="rgba(255,255,255,0.35)" />
+                  <Ionicons name="paper-plane" size={13} color="rgba(255,255,255,0.35)" />
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            /* Standard Full / 50-50 Canvas */
+            <View style={styles.standardCanvas}>
+              <View style={styles.canvasTop}>
+                <StatusPill label={config.aspectRatio} tone="neutral" />
+                {config.autoZoom ? <StatusPill label="ZOOM IA" tone="accent" /> : null}
+              </View>
+
+              <View style={styles.subjectWrap}>
+                <View style={styles.subjectAvatar}>
+                  <Ionicons name="mic" size={26} color={colors.fg} />
+                </View>
+                {config.smartCrop ? (
+                  <View style={styles.faceBox}>
+                    <Text style={styles.faceLabel}>FACE LOCK</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={styles.captionWrap}>
+                <Text
+                  style={[
+                    styles.captionText,
+                    config.captionStyle === 'clean' && styles.captionClean,
+                    config.captionStyle === 'pop' && styles.captionPop,
+                    config.captionStyle === 'magenta' && styles.captionMagenta,
+                  ]}
+                >
+                  {config.censorWords ? 'ESTO CAMBIA **** TODO' : 'ESTO CAMBIA BRUTAL TODO'}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
@@ -98,7 +167,7 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
           <Text style={styles.timeText}>
             00:{String(Math.round(playhead * 0.38)).padStart(2, '0')}
           </Text>
-          <Text style={styles.timelineTag}>TIMELINE · AUDIO PEAKS</Text>
+          <Text style={styles.timelineTag}>TIMELINE · FACECAM + VIDEO</Text>
           <Text style={styles.timeMuted}>00:38</Text>
         </View>
 
@@ -145,7 +214,7 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
       <View style={styles.card}>
         <View style={styles.segBar}>
           {[
-            { id: 'format' as const, label: 'FORMATO' },
+            { id: 'format' as const, label: 'LAYOUT' },
             { id: 'captions' as const, label: 'SUBTÍTULOS' },
             { id: 'effects' as const, label: 'EFECTOS' },
           ].map((t) => {
@@ -169,6 +238,37 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
 
         {toolTab === 'format' ? (
           <View style={{ gap: 12 }}>
+            {/* Layout Presets */}
+            <View style={styles.ratioRow}>
+              {(
+                [
+                  { id: 'streamer_split', title: 'STREAMER', sub: 'Facecam + Blur' },
+                  { id: 'full_vertical', title: 'FULL 9:16', sub: 'Pantalla llena' },
+                  { id: 'split_50_50', title: '50 / 50', sub: 'Doble corte' },
+                ] as { id: LayoutPreset; title: string; sub: string }[]
+              ).map((lp) => {
+                const active = config.layoutPreset === lp.id;
+                return (
+                  <Pressable
+                    key={lp.id}
+                    onPress={() => {
+                      triggerHaptic();
+                      onUpdateConfig({ layoutPreset: lp.id, aspectRatio: '9:16' });
+                    }}
+                    style={[styles.ratioBtn, active && styles.ratioBtnActive]}
+                  >
+                    <Text style={[styles.ratioTitle, active && { color: colors.white }]}>
+                      {lp.title}
+                    </Text>
+                    <Text style={[styles.ratioSub, active && { color: colors.fg }]}>
+                      {lp.sub}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Aspect Ratio Selector */}
             <View style={styles.ratioRow}>
               {(['9:16', '16:9', '1:1'] as AspectRatio[]).map((r) => {
                 const active = config.aspectRatio === r;
@@ -179,30 +279,33 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
                       triggerHaptic();
                       onUpdateConfig({ aspectRatio: r });
                     }}
-                    style={[styles.ratioBtn, active && styles.ratioBtnActive]}
+                    style={[styles.miniRatioBtn, active && styles.miniRatioBtnActive]}
                   >
-                    <Text style={[styles.ratioTitle, active && { color: colors.white }]}>
+                    <Text style={[styles.miniRatioText, active && { color: colors.white }]}>
                       {r}
-                    </Text>
-                    <Text style={[styles.ratioSub, active && { color: colors.fg }]}>
-                      {r === '9:16' ? 'Reels/Shorts' : r === '16:9' ? 'YouTube' : 'Feed'}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
+
             <SwitchRow
-              title="Smart Crop (Face Track IA)"
-              description="Sigue al hablante automáticamente"
-              value={config.smartCrop}
-              onValueChange={(v) => onUpdateConfig({ smartCrop: v })}
+              title="Fondo difuminado (Blur Neon)"
+              description="Rellena los laterales de la cámara con blur ambiental"
+              value={config.blurBackdrop}
+              onValueChange={(v) => onUpdateConfig({ blurBackdrop: v })}
             />
-            <SwitchRow
-              title="Zona segura IG / YT / FB"
-              description="Guías para evitar tapar subtítulos"
-              value={config.safeZone}
-              onValueChange={(v) => onUpdateConfig({ safeZone: v })}
-            />
+
+            <View style={{ gap: 6 }}>
+              <Text style={styles.fieldLabel}>MARCA DE AGUA / CANAL (EN FACECAM)</Text>
+              <TextInput
+                value={config.creatorWatermark}
+                onChangeText={(t) => onUpdateConfig({ creatorWatermark: t })}
+                placeholder="Ej. KICK.COM/TU_CANAL"
+                placeholderTextColor={colors.placeholder}
+                style={styles.input}
+              />
+            </View>
           </View>
         ) : null}
 
@@ -211,9 +314,9 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
             <View style={styles.ratioRow}>
               {(
                 [
+                  { id: 'clean', title: 'CLEAN', sub: 'Blanco nítido' },
                   { id: 'pop', title: 'POP PRO', sub: 'Amarillo' },
                   { id: 'magenta', title: 'MAGENTA', sub: 'Studio' },
-                  { id: 'minimal', title: 'MINIMAL', sub: 'Caja' },
                 ] as { id: CaptionStyle; title: string; sub: string }[]
               ).map((c) => {
                 const active = config.captionStyle === c.id;
@@ -248,15 +351,23 @@ export function EditorScreen({ config, onUpdateConfig, onBack, onGoPreview }: Pr
         {toolTab === 'effects' ? (
           <View style={{ gap: 12 }}>
             <SwitchRow
+              title="Smart Crop (Face Track IA)"
+              description="Centra tu rostro dentro de la tarjeta superior"
+              value={config.smartCrop}
+              onValueChange={(v) => onUpdateConfig({ smartCrop: v })}
+            />
+            <SwitchRow
               title="Auto-Zoom en picos de voz"
               description="Escala suave 1.15x en reacciones"
               value={config.autoZoom}
               onValueChange={(v) => onUpdateConfig({ autoZoom: v })}
             />
-            <View style={styles.audioRow}>
-              <Text style={styles.audioLabel}>Normalización voz (-14 LUFS)</Text>
-              <StatusPill label="ACTIVO" tone="ok" />
-            </View>
+            <SwitchRow
+              title="Zona segura IG / YT / FB"
+              description="Guías para evitar tapar subtítulos"
+              value={config.safeZone}
+              onValueChange={(v) => onUpdateConfig({ safeZone: v })}
+            />
           </View>
         ) : null}
       </View>
@@ -284,23 +395,121 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   stageOuter: {
-    minHeight: 312,
+    minHeight: 346,
     backgroundColor: '#050506',
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
+    padding: 8,
   },
   canvas: {
-    backgroundColor: '#131119',
+    backgroundColor: '#0D0C12',
     borderWidth: 1,
     borderColor: colors.lineStrong,
     borderRadius: radius.sm,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  splitContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  topAmbientZone: {
+    height: '38%',
+    backgroundColor: '#6D147E',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  glowLeft: {
+    position: 'absolute',
+    top: -20,
+    left: -20,
+    width: 110,
+    height: 110,
+    borderRadius: 99,
+    backgroundColor: 'rgba(255, 10, 138, 0.55)',
+  },
+  glowRight: {
+    position: 'absolute',
+    bottom: -15,
+    right: -15,
+    width: 110,
+    height: 110,
+    borderRadius: 99,
+    backgroundColor: 'rgba(139, 92, 246, 0.55)',
+  },
+  bottomContentZone: {
+    flex: 1,
+    backgroundColor: '#12100E',
+    justifyContent: 'space-between',
+    paddingTop: 22,
+    paddingBottom: 14,
+    paddingHorizontal: 10,
+  },
+  scenePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  sceneLabel: {
+    color: 'rgba(255,255,255,0.28)',
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  facecamCard: {
+    position: 'absolute',
+    top: 26,
+    alignSelf: 'center',
+    width: 104,
+    height: 106,
+    borderRadius: 12,
+    backgroundColor: '#241838',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  facecamInner: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  faceLockPill: {
+    backgroundColor: colors.ok,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 3,
+  },
+  faceLockText: {
+    color: '#070708',
+    fontSize: 6,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  watermarkPill: {
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    maxWidth: '92%',
+  },
+  watermarkText: {
+    color: colors.white,
+    fontSize: 6.5,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  standardCanvas: {
+    flex: 1,
     padding: 10,
     justifyContent: 'space-between',
-    position: 'relative',
   },
   canvasTop: {
     flexDirection: 'row',
@@ -309,9 +518,9 @@ const styles = StyleSheet.create({
   },
   safeZoneIcons: {
     position: 'absolute',
-    right: 8,
-    bottom: 62,
-    gap: 10,
+    right: 7,
+    bottom: 48,
+    gap: 9,
   },
   subjectWrap: {
     alignSelf: 'center',
@@ -352,29 +561,31 @@ const styles = StyleSheet.create({
   },
   captionWrap: {
     alignItems: 'center',
-    paddingBottom: 4,
+    paddingHorizontal: 6,
   },
   captionText: {
     textAlign: 'center',
-    fontWeight: '900',
+  },
+  captionClean: {
+    color: '#F5F3EF',
+    fontSize: 8.5,
+    fontWeight: '700',
+    lineHeight: 12,
+    textShadowColor: 'rgba(0,0,0,0.95)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   captionPop: {
     color: colors.warn,
-    fontSize: 13,
-    letterSpacing: 0.4,
+    fontSize: 10,
+    fontWeight: '900',
+    lineHeight: 13,
   },
   captionMagenta: {
     color: colors.acc,
-    fontSize: 13,
-    letterSpacing: 0.6,
-  },
-  captionMinimal: {
-    color: colors.white,
-    fontSize: 11,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.xs,
+    fontSize: 10,
+    fontWeight: '900',
+    lineHeight: 13,
   },
   card: {
     backgroundColor: colors.bg2,
@@ -492,7 +703,7 @@ const styles = StyleSheet.create({
   },
   ratioTitle: {
     color: colors.fg,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
   },
   ratioSub: {
@@ -500,15 +711,38 @@ const styles = StyleSheet.create({
     fontSize: 9,
     marginTop: 2,
   },
-  audioRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  miniRatioBtn: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: radius.xs,
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.line,
     alignItems: 'center',
-    paddingTop: 4,
   },
-  audioLabel: {
+  miniRatioBtnActive: {
+    borderColor: colors.acc,
+    backgroundColor: colors.accTint,
+  },
+  miniRatioText: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  fieldLabel: {
+    color: colors.muted,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  input: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.xs,
     color: colors.fg,
     fontSize: 12,
-    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 9,
   },
 });

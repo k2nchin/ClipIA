@@ -9,7 +9,8 @@ export type ScreenId =
   | 'cloud';
 
 export type AspectRatio = '9:16' | '16:9' | '1:1';
-export type CaptionStyle = 'pop' | 'magenta' | 'minimal';
+export type LayoutPreset = 'streamer_split' | 'full_vertical' | 'split_50_50';
+export type CaptionStyle = 'clean' | 'pop' | 'magenta';
 export type PlatformKey = 'ig' | 'yt' | 'fb';
 
 export type VideoProject = {
@@ -48,6 +49,9 @@ export type AutomationSettings = {
 
 export type EditorConfig = {
   aspectRatio: AspectRatio;
+  layoutPreset: LayoutPreset;
+  blurBackdrop: boolean;
+  creatorWatermark: string;
   smartCrop: boolean;
   safeZone: boolean;
   captionStyle: CaptionStyle;
