@@ -10,11 +10,16 @@ permissions:
 
 jobs:
   build-ios-ipa:
-    name: Build Unsigned iOS IPA (Xcode macOS-15)
-    runs-on: macos-15
+    name: Build Unsigned iOS IPA (Xcode macOS-26)
+    runs-on: macos-26
     timeout-minutes: 45
 
     steps:
+      - name: Show Xcode & Swift version
+        run: |
+          xcodebuild -version
+          swift --version
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
