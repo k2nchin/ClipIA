@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme/tokens';
 import { AutomationSettings } from '../types/clipia';
+import { CONTENT_SCHEDULER_CONFIG } from '../config/credentials';
 import { StatusPill, SwitchRow } from '../components/StudioPrimitives';
 
 type Props = {
@@ -71,7 +72,10 @@ export function CloudDriveScreen({ automation, onUpdateAutomation }: Props) {
 
       {/* Connected Social Accounts */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>CUENTAS CONECTADAS (OAUTH)</Text>
+        <Text style={styles.cardTitle}>CREDENCIALES CONTENT SCHEDULER (OAUTH)</Text>
+        <Text style={styles.queueDesc}>
+          Google iOS: {CONTENT_SCHEDULER_CONFIG.googleIosClientId.slice(0, 22)}… · Meta App: {CONTENT_SCHEDULER_CONFIG.metaAppId}
+        </Text>
         {[
           { name: 'Instagram Reels', icon: 'logo-instagram' as const, color: colors.ig },
           { name: 'YouTube Shorts', icon: 'logo-youtube' as const, color: colors.yt },

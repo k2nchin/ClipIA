@@ -5,9 +5,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-ios-ipa:
-    name: Build Unsigned iOS IPA (Xcode)
+    name: Build Unsigned iOS IPA (Xcode macOS-15)
     runs-on: macos-15
     timeout-minutes: 45
 
@@ -71,7 +74,7 @@ jobs:
           mkdir -p ipa_out/Payload
           cp -R "$APP_PATH" ipa_out/Payload/
           cd ipa_out
-          zip -r ../ClipIA-iOS.ipa Payload
+          zip -qr ../ClipIA-iOS.ipa Payload
           ls -lh ../ClipIA-iOS.ipa
 
       - name: Upload ClipIA-iOS.ipa artifact
@@ -80,3 +83,13 @@ jobs:
           name: ClipIA-iOS-IPA
           path: mobile/ios/ClipIA-iOS.ipa
           retention-days: 30
+
+      - name: Publish to GitHub Releases (ios-latest)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ios-latest -y --cleanup-tag || true
+          gh release create ios-latest mobile/ios/ClipIA-iOS.ipa --target "$GITHUB_SHA" --prerelease \
+            --title "ClipIA iOS Pro (sin firmar)" \
+            --notes "Compilado desde ${GITHUB_SHA::7} con credenciales OAuth de Content Scheduler (Google Drive/YouTube + Meta IG/FB). Instálalo con Sideloadly o AltStore."

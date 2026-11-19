@@ -4,14 +4,28 @@
     "slug": "clipia",
     "version": "0.2.0",
     "orientation": "portrait",
+    "scheme": "com.googleusercontent.apps.84783551840-mki8tk5nse0mh4idh09f88gi8csf59f1",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#070708",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.clipia.studio",
+      "bundleIdentifier": "com.contentscheduler.app",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "ClipIA necesita acceso a tus fotos y videos para importar clips y eliminar archivos residuales cuando lo autorices."
+        "NSPhotoLibraryUsageDescription": "ClipIA necesita acceso a tus fotos y videos para importar clips y eliminar archivos residuales cuando lo autorices.",
+        "NSCameraUsageDescription": "ClipIA puede grabar video en vivo para generar clips automáticamente.",
+        "NSMicrophoneUsageDescription": "ClipIA usa el micrófono para capturar audio y detectar momentos destacados.",
+        "GoogleClientID": "84783551840-mki8tk5nse0mh4idh09f88gi8csf59f1.apps.googleusercontent.com",
+        "MetaAppID": "1611404507348655",
+        "FacebookAppID": "1611404507348655",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.84783551840-mki8tk5nse0mh4idh09f88gi8csf59f1",
+              "fb1611404507348655"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -25,6 +39,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "googleIosClientId": "84783551840-mki8tk5nse0mh4idh09f88gi8csf59f1.apps.googleusercontent.com",
+      "googleReversedClientId": "com.googleusercontent.apps.84783551840-mki8tk5nse0mh4idh09f88gi8csf59f1",
+      "metaAppId": "1611404507348655",
+      "contentSchedulerUrl": "https://contentscheduler.vercel.app"
     },
     "plugins": [
       "expo-video"
